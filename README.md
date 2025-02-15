@@ -32,3 +32,12 @@ Windows PE 文件移动 .rsrc 区段工具
 
 ### 感谢
 感谢 wanfu 大佬的指点和非标宏。
+
+
+
+### 其他
+
+自用的一些脚本，解决汉化过程中遇到的一些问题：
+
+- change_rcdata_charset.py ：将 RCDATA 资源中的 dfm 文件（delphi）中的 Font.Charset = ANSI_CHARSET 修改成 Font.Charset = DEFAULT_CHARSET ，这样可以解决有些界面汉字是乱码的问题。通过修改脚本代码，理论上也可以支持修改更多字符集的情况。
+
