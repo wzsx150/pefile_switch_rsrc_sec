@@ -40,4 +40,5 @@ Windows PE 文件移动 .rsrc 区段工具
 自用的一些脚本，解决汉化过程中遇到的一些问题：
 
 - change_rcdata_charset.py ：将 RCDATA 资源中的 dfm 文件（delphi）中的 Font.Charset = ANSI_CHARSET 修改成 Font.Charset = DEFAULT_CHARSET ，这样可以解决有些界面汉字是乱码的问题。通过修改脚本代码，理论上也可以支持修改更多字符集的情况。注意需要配合 ResourceHacker_zh-CN.exe 使用，请自行下载 Resource Hacker 工具。
+- py_read_reloc.py ：读取 PE 文件的重定向表，主要是针对 dll 等被加载的文件。当修改某些段的数据以后，有些带全局的偏移量的数据就需要根据基地址进行重定向，此时就需要也修改重定向表，保证程序代码可以正常运行。
 
