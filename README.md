@@ -5,7 +5,7 @@
 针对 exe、dll 等 PE 文件经过脱壳、解密、或者非标宏汉化等操作后，导致最后一区段不是 .rsrc 区段，此时再修改 .rsrc 区段数据，可能就会导致程序错误或者无法运行。
 为了解决该问题，编写了 Python 脚本，脚本中有大量的注释和调试语句，方便理解和修改。
 
-建议使用 py3.10 运行脚本。
+建议使用 Python 3.10 以上版本运行脚本，不支持 Python 2。
 由于 pefile 库的版本不同，pe的有些参数或者变量名可能会有所不同。
 
 
@@ -39,5 +39,5 @@ Windows PE 文件移动 .rsrc 区段工具
 
 自用的一些脚本，解决汉化过程中遇到的一些问题：
 
-- change_rcdata_charset.py ：将 RCDATA 资源中的 dfm 文件（delphi）中的 Font.Charset = ANSI_CHARSET 修改成 Font.Charset = DEFAULT_CHARSET ，这样可以解决有些界面汉字是乱码的问题。通过修改脚本代码，理论上也可以支持修改更多字符集的情况。
+- change_rcdata_charset.py ：将 RCDATA 资源中的 dfm 文件（delphi）中的 Font.Charset = ANSI_CHARSET 修改成 Font.Charset = DEFAULT_CHARSET ，这样可以解决有些界面汉字是乱码的问题。通过修改脚本代码，理论上也可以支持修改更多字符集的情况。注意需要配合 ResourceHacker_zh-CN.exe 使用，请自行下载 Resource Hacker 工具。
 
