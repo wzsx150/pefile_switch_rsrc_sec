@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import os
 import subprocess
 import sys
@@ -6,10 +7,14 @@ import shutil
 import chardet
 
 
-# 修改 RCDATA 资源的字符集的工具 v1.0-20250216  by wzsx150 
+# 修改 RCDATA 资源的字符集的工具 v2.0-20250220  by wzsx150 
 # 将 RCDATA 资源中的 dfm 文件（delphi）中的 Font.Charset = ANSI_CHARSET 修改成 Font.Charset = DEFAULT_CHARSET ，这样可以解决有些界面汉字是乱码的问题。
 # 将 Windows PE 文件(.exe、.dll等)的资源文件中类型是 RCDATA 类型的资源中，有一些是delphi的dfm文件，该脚本就是将这些资源解包，然后替换修改，然后再导入。
 # 写的比较粗糙，没有做各种人性化的适配，主要是自用。
+
+# 注意：
+# 1、推荐使用 Python 3.10 以上版本运行该脚本，不支持 Python 2。需要安装相关库。
+# 2、请确认 PE 文件是完整无损坏的，并且 .rsrc 资源区段是允许被修改的（比如：.rsrc 区段一般要是 PE 文件的最后一个区段），否则可能导致修改后程序无法运行。
 
 
 # Resource Hacker 的路径
@@ -27,7 +32,8 @@ def get_rcdata_resources(exe_path):
             elif resource.name is not None and resource.id == 10:
                 rcdata_resources.append(resource.name.decode('utf-8'))
     except Exception as e:
-        print(f"获取 RCDATA 资源时出错: {e}")
+        print(f"错误，获取 RCDATA 资源时出错: {e}")
+        sys.exit(11)
     
     print("RCDATA 类型资源名：", end='')
     for resource_name in rcdata_resources:
@@ -39,13 +45,17 @@ def get_rcdata_resources(exe_path):
 def extract_rc_resources(exe_path, resource_names):
     """提取指定 RCDATA 资源并返回资源名称和文件路径的字典"""
     temp_dir = "extracted_resources_temp_"
-    
-    # 删除临时文件夹（如果存在）
-    if os.path.exists(temp_dir):
-        shutil.rmtree(temp_dir)
-        print(f"已删除临时文件夹: {temp_dir}")
-    
-    os.makedirs(temp_dir, exist_ok=True)
+
+    try:
+        # 删除临时文件夹（如果存在）
+        if os.path.exists(temp_dir):
+            shutil.rmtree(temp_dir)
+            print(f"已清空临时文件夹: {temp_dir}")
+        
+        os.makedirs(temp_dir, exist_ok=True)
+    except Exception as e:
+        print(f"错误，清空临时文件夹 {temp_dir} 失败: {e}")
+        sys.exit(4)
 
     rc_files = {}
     for resource_name in resource_names:
@@ -65,7 +75,8 @@ def extract_rc_resources(exe_path, resource_names):
             subprocess.run(command, check=True)
             rc_files[resource_name] = f"{temp_dir}\\{resource_name_dfm}.dfm"  #如果是dfm，Resource Hacker会自动解析成dfm文件，所以这里直接找 dfm 文件。
         except subprocess.CalledProcessError as e:
-            print(f"提取资源 '{resource_name}' 时出错: {e}")
+            print(f"错误，提取资源 '{resource_name}' 时出错: {e}")
+            sys.exit(12)
 
     return rc_files
 
@@ -128,6 +139,7 @@ def import_rc_resources(exe_path, rc_files, new_exe_name):
             print(f"   已导入修改后的资源 '{resource_name}'")
         except subprocess.CalledProcessError as e:
             print(f"   导入资源 '{resource_name}' 时出错: {e}")
+            sys.exit(13)
 
 def main(exe_path):
     # 生成新的 EXE 文件名
@@ -135,7 +147,7 @@ def main(exe_path):
     new_exe_name = f"{base_name}_change_charset{ext}"
 
     # 复制源文件到新的文件名
-    shutil.copy(exe_path, new_exe_name)
+    shutil.copy2(exe_path, new_exe_name)
     print(f"已将源文件复制到: {new_exe_name}")
 
     # 获取 RCDATA 资源名称
@@ -145,7 +157,6 @@ def main(exe_path):
     # 提取 RCDATA 资源
     print(f"== 正在从 {exe_path} 提取 RCDATA 资源...")
     rc_files = extract_rc_resources(exe_path, resource_names)
-
 
     # 修改每个 RCDATA 中的 dfm 文件
     modified_files = []
@@ -164,15 +175,22 @@ def main(exe_path):
         print("== 没有任何资源文件被修改，未进行导入。")
 
 if __name__ == "__main__":
+    print("将PE文件中RCDATA资源中的 Font.Charset = ANSI_CHARSET 修改成 Font.Charset = DEFAULT_CHARSET 的工具。")
+    print("请确认 PE 文件是完整无损坏的，并且 .rsrc 资源区段是允许被修改的（比如：.rsrc 区段一般要是 PE 文件的最后一个区段），否则可能导致修改后程序无法运行。")
+    print("")
     if len(sys.argv) != 2:
-        print("将PE文件中RCDATA资源中的 Font.Charset = ANSI_CHARSET 修改成 Font.Charset = DEFAULT_CHARSET 的工具。")
-        print("用法: python script.py <pe_file>")
-        sys.exit(1)
+        print("用法: python script.py <pe_file>\n")
+        sys.exit(0)
 
     exe_path = sys.argv[1]
 
-    if not os.path.exists(exe_path):
-        print(f"文件未找到: {exe_path}")
+    if not os.path.isfile(exe_path):
+        print(f"错误，找不到文件: {exe_path}")
         sys.exit(1)
+
+    if not os.path.isfile(RESOURCE_HACKER_PATH):
+        print(f"错误，找不到 Resource Hacker 程序，请确认程序文件存在: '{RESOURCE_HACKER_PATH}'")
+        print(f"或者修改该 Python 脚本中 RESOURCE_HACKER_PATH 变量的值(即文件路径)。")
+        sys.exit(2)
 
     main(exe_path)
